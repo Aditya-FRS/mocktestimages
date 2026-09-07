@@ -1,2 +1,0 @@
-HR :- STAR001 -- Master@1234
-admin :- admin -- Master@123456       --- https://settings-starwars.akriviahcm.io 

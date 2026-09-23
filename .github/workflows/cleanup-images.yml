@@ -1,5 +1,9 @@
-name: Delete Recent Pictures
+name: Delete Recent Exam Images
 on: workflow_dispatch
+
+# This block fixes the exit code 128 error by allowing changes to be pushed
+permissions:
+  contents: write
 
 jobs:
   cleanup:
@@ -8,14 +12,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Find and delete images from last 3 hours
+      - name: Delete images from last 3 hours in exam-images
         run: |
-          # Finds images modified in the last 180 minutes (3 hours)
-          find . -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.webp" \) -mmin -180 -delete
+          find exam-images -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.webp" \) -mmin -180 -delete
 
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
-          git add .
-          git diff-index --quiet HEAD || (git commit -m "Remove pictures from last 3 hours" && git push)
+          git add exam-images
+          git diff-index --quiet HEAD || (git commit -m "Remove recent exam images" && git push)

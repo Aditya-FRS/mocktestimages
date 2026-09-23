@@ -1,0 +1,21 @@
+name: Delete Recent Pictures
+on: workflow_dispatch
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find and delete images from last 3 hours
+        run: |
+          # Finds images modified in the last 180 minutes (3 hours)
+          find . -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.webp" \) -mmin -180 -delete
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          git add .
+          git diff-index --quiet HEAD || (git commit -m "Remove pictures from last 3 hours" && git push)

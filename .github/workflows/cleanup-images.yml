@@ -11,13 +11,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches history so we can rewind time
+          fetch-depth: 0 # Fetches history to find the deleted items
 
-      - name: Force branch back by one commit
+      - name: Restore files from the commit before deletion
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Forcefully rewinds the repository state before the deletion happened
-          git reset --hard HEAD~1
-          git push origin main --force
+          # Extracts the deleted files from the parent commit (34565e7~) and copies them back
+          git checkout 34565e7~1 -- exam-images/
+          
+          # Commit the restored files as a completely new change
+          git add exam-images/
+          git commit -m "Restore all 465 exam images safely"
+          git push origin main

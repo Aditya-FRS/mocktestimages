@@ -1,4 +1,4 @@
-name: Delete Recent Exam Images
+name: Emergency Restore 
 on: workflow_dispatch
 
 permissions:

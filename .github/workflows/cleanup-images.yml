@@ -5,35 +5,23 @@ permissions:
   contents: write
 
 jobs:
-  cleanup-recent:
+  undo-delete:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necessary to read git history logs
+          fetch-depth: 0 # Fetches history to find the deleted items
 
-      - name: Find and delete images committed in the last 3 hours
-        run: |
-          # 1. Get a list of files added or modified in commits over the last 3 hours (180 mins)
-          FILES=$(git log --since="180 minutes ago" --name-only --pretty=format: | grep -E '^exam-images/.*\.(png|jpg|jpeg|webp)$' | sort -u)
-          
-          if [ -z "$FILES" ]; then
-            echo "No images found from the last 3 hours."
-            exit 0
-          fi
-
-          echo "Found these recent images to delete:"
-          echo "$FILES"
-
-          # 2. Delete only those specific files
-          echo "$FILES" | xargs rm -f
-
-      - name: Commit and Push changes
+      - name: Restore files from the commit before deletion
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Add the changes from the exam-images directory
+          # Extracts the deleted files from the parent commit (34565e7~) and copies them back
+          git checkout 34565e7~1 -- exam-images/
+          
+          # Commit the restored files as a completely new change
           git add exam-images/
-          git diff-index --quiet HEAD || (git commit -m "Delete only pictures added in last 3 hours" && git push origin main)
+          git commit -m "Restore all 465 exam images safely"
+          git push origin main

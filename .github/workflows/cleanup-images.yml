@@ -1,27 +1,41 @@
-name: Delete Recent Exam Images
+name: 1. Delete Recent Images (3 Hours)
 on: workflow_dispatch
 
 permissions:
   contents: write
 
 jobs:
-  undo-delete:
+  delete-recent:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetches history to find the deleted items
 
-      - name: Restore files from the commit before deletion
+      - name: Filter and delete images by filename timestamp
+        run: |
+          # Calculate millisecond threshold for 3 hours ago
+          NOW_MS=$(date +%s%3N)
+          THRESHOLD_MS=$((NOW_MS - 10800000))
+          
+          echo "Looking for image filenames with timestamps newer than: $THRESHOLD_MS"
+          
+          for filepath in exam-images/*.*; do
+            filename=$(basename "$filepath")
+            
+            # Extract the 13-digit timestamp from the filename
+            if [[ $filename =~ ([0-9]{13}) ]]; then
+              file_ts=${BASH_REMATCH}
+              
+              if [ "$file_ts" -gt "$THRESHOLD_MS" ]; then
+                echo "Deleting recent image: $filename"
+                rm -f "$filepath"
+              fi
+            fi
+          done
+
+      - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Extracts the deleted files from the parent commit (34565e7~) and copies them back
-          git checkout 34565e7~1 -- exam-images/
-          
-          # Commit the restored files as a completely new change
+          git config --global user.email "github-actions[bot]@://github.com"
           git add exam-images/
-          git commit -m "Restore all 465 exam images safely"
-          git push origin main
+          git diff-index --quiet HEAD || (git commit -m "Delete images from last 3 hours" && git push origin main)
